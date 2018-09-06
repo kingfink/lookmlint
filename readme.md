@@ -3,7 +3,7 @@
 Lint your lookML.
 
 - Flag unused view files
-- Flag unused `include`d views
+- Flag unused `include`s in explorations
 
 You can optionally configure `lookmlint` to keep labels clean throughout your project:
 
