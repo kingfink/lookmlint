@@ -160,6 +160,10 @@ class View(LabeledResource):
         return results
 
 
+    def has_primary_key(self):
+        return any(d.is_primary_key for d in self.dimensions)
+
+
 @attr.s
 class Dimension(LabeledResource):
 
@@ -176,6 +180,7 @@ class Dimension(LabeledResource):
         if 'label' in self.data:
             self.label = self.data['label']
         self.description = self.data.get('description')
+        self.is_primary_key = (self.data.get('primary_key') is True)
 
 
 @attr.s
@@ -272,7 +277,6 @@ class LookML(object):
         return results
 
 
-
 def parse_repo(full_path):
     cmd = (
         f'cd {full_path} && '
@@ -309,6 +313,8 @@ def lint(repo_path):
         for m in lkml.models
         if m.unused_includes() != []
     }
+
+    views_missing_primary_keys = [v.name for v in lkml.views if not v.has_primary_key()]
 
     # check for acronym and abbreviation issues
     explore_label_issues = {}
@@ -348,6 +354,8 @@ def lint(repo_path):
         issues['unused_view_files'] = unused_view_files
     if unused_includes != {}:
         issues['unused_includes'] = unused_includes
+    if views_missing_primary_keys != []:
+        issues['views_missing_primary_keys'] = views_missing_primary_keys
     if label_issues != {}:
         issues['label_issues'] = label_issues
 
@@ -358,12 +366,17 @@ def lint(repo_path):
     if 'unused_view_files' in issues:
         print('Unused View Files')
         print('-'*50)
-        print(yaml.dump(issues['unused_view_files']))
+        print(yaml.dump(issues['unused_view_files'], default_flow_style=False))
         print('\n')
     if 'unused_includes' in issues:
         print('Unused Includes')
         print('-'*50)
-        print(yaml.dump(issues['unused_includes']))
+        print(yaml.dump(issues['unused_includes'], default_flow_style=False))
+        print('\n')
+    if 'views_missing_primary_keys' in issues:
+        print('Views Missing Primary Keys')
+        print('-'*50)
+        print(yaml.dump(issues['views_missing_primary_keys'], default_flow_style=False))
         print('\n')
     if 'label_issues' in issues:
         for section, issues in issues['label_issues'].items():
