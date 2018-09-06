@@ -1,1 +1,1 @@
-from lookmlint import *
+from .lookmlint import *
