@@ -1,6 +1,5 @@
 import json
 import os
-from pprint import pprint
 import subprocess
 
 import attr
@@ -359,16 +358,16 @@ def lint(repo_path):
     if 'unused_view_files' in issues:
         print('Unused View Files')
         print('-'*50)
-        pprint(issues['unused_view_files'])
+        print(yaml.dump(issues['unused_view_files']))
         print('\n')
     if 'unused_includes' in issues:
         print('Unused Includes')
         print('-'*50)
-        pprint(issues['unused_includes'])
+        print(yaml.dump(issues['unused_includes']))
         print('\n')
     if 'label_issues' in issues:
         for section, issues in issues['label_issues'].items():
             print('Label Issues - {}'.format(section.replace('_', ' ').title()))
             print('-'*50)
-            pprint(issues)
+            print(yaml.dump(issues))
             print('\n')
