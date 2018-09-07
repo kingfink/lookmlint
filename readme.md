@@ -2,14 +2,17 @@
 
 Lint your lookML.
 
-- Flag unused view files
-- Flag unused `include`s in explorations
-- Flag views without a primary key
+Includes linting for catching the following:
 
-You can optionally configure `lookmlint` to keep labels clean throughout your project:
+- Unused view files
+- Unused `include`s in explorations
+- Views without a primary key
+- Raw SQL field references in join conditions (e.g. `order.id` vs `${order.id}`)
 
-- Flag improperly-capitalized acronyms (e.g. 'Sla')
-- Flag abbreviations (e.g. 'Num')
+You can optionally configure `lookmlint` to keep labels clean throughout your project, catching:
+
+- Improperly-capitalized acronyms (e.g. 'Sla')
+- Abbreviations (e.g. 'Num')
 
 ## installation
 
@@ -60,5 +63,4 @@ acronyms:
   - sms
   - sku
   - sla
-  ...
 ```
