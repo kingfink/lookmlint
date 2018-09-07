@@ -55,10 +55,28 @@ class ExploreView(LabeledResource):
         if 'view_label' in self.data:
             self.label = self.data['view_label']
         self.explore = self.data['_explore']
+        self.sql_on = self.data.get('sql_on')
 
 
     def _get_first_key(self, keys):
         return next(self.data[k] for k in keys if k in self.data)
+
+
+    def contains_raw_sql_ref(self):
+        if not self.sql_on:
+            return False
+        raw_sql_words = [
+            w for line in self.sql_on.split('\n') for w in line.split()
+            # not a comment line
+            if not line.replace(' ', '').startswith('--')
+            # doesn't contain lookml syntax
+            and not '${' in w and not '}' in w
+            # not a custom function with newlined args
+            and not w.endswith('(')
+            # contains one period
+            and w.count('.') == 1
+        ]
+        return len(raw_sql_words) > 0
 
 
 @attr.s
@@ -314,7 +332,22 @@ def lint(repo_path):
         if m.unused_includes() != []
     }
 
+    # check for missing primary keys
     views_missing_primary_keys = [v.name for v in lkml.views if not v.has_primary_key()]
+
+    # check for raw SQL field references
+    raw_sql_refs = {}
+    for m in lkml.models:
+        for e in m.explores:
+            for v in e.views:
+                if not v.contains_raw_sql_ref():
+                    continue
+                if m.name not in raw_sql_refs:
+                    raw_sql_refs[m.name] = {}
+                if e.name not in raw_sql_refs[m.name]:
+                    raw_sql_refs[m.name][e.name] = {}
+                raw_sql_refs[m.name][e.name][v.name] = v.sql_on
+
 
     # check for acronym and abbreviation issues
     explore_label_issues = {}
@@ -358,6 +391,8 @@ def lint(repo_path):
         issues['views_missing_primary_keys'] = views_missing_primary_keys
     if label_issues != {}:
         issues['label_issues'] = label_issues
+    if raw_sql_refs != {}:
+        issues['raw_sql_refs'] = raw_sql_refs
 
     if issues == {}:
         print('No issues found!')
@@ -377,6 +412,11 @@ def lint(repo_path):
         print('Views Missing Primary Keys')
         print('-'*50)
         print(yaml.dump(issues['views_missing_primary_keys'], default_flow_style=False))
+        print('\n')
+    if 'raw_sql_refs' in issues:
+        print('Raw SQL Field References')
+        print('-'*50)
+        print(yaml.dump(issues['raw_sql_refs'], default_flow_style=False))
         print('\n')
     if 'label_issues' in issues:
         for section, issues in issues['label_issues'].items():
