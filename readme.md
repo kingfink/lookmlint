@@ -42,7 +42,7 @@ $ lookmlint lint ~/my-lookml-repo
 Alternatively, specify which `checks` to run:
 
 ```
-$ lookmlint lint ~/my-lookml-repo --checks unused-includes,primary-keys
+$ lookmlint lint ~/my-lookml-repo --checks includes,primary-keys
 ```
 
 From python:
