@@ -6,6 +6,7 @@ setup(
     install_requires=[
         'attrs',
         'click',
+        'pyyaml',
     ],
     packages=find_packages(),
     entry_points={
