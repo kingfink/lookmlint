@@ -12,27 +12,20 @@ class LabeledResource(object):
     label = attr.ib(init=False, default=None, repr=False)
 
     def contains_bad_acronym_usage(self, acronym):
-            return any(
-                acronym.upper() == k.upper() and k != k.upper()
-                for k in self.label.split(' ')
-            )
-
+        return any(
+            acronym.upper() == k.upper() and k != k.upper()
+            for k in self.label.split(' ')
+        )
 
     def contains_bad_abbreviation_usage(self, abbreviation):
-            return any(
-                abbreviation.lower() == k.lower()
-                for k in self.label.split(' ')
-            )
-
+        return any(abbreviation.lower() == k.lower() for k in self.label.split(' '))
 
     def label_issues(self, acronyms, abbreviations):
         acronyms_used = [
-            a.upper() for a in acronyms
-            if self.contains_bad_acronym_usage(a)
+            a.upper() for a in acronyms if self.contains_bad_acronym_usage(a)
         ]
         abbreviations_used = [
-            a.title() for a in abbreviations
-            if self.contains_bad_abbreviation_usage(a)
+            a.title() for a in abbreviations if self.contains_bad_abbreviation_usage(a)
         ]
         return acronyms_used + abbreviations_used
 
@@ -57,16 +50,16 @@ class ExploreView(LabeledResource):
         self.explore = self.data['_explore']
         self.sql_on = self.data.get('sql_on')
 
-
     def _get_first_key(self, keys):
         return next(self.data[k] for k in keys if k in self.data)
-
 
     def contains_raw_sql_ref(self):
         if not self.sql_on:
             return False
         raw_sql_words = [
-            w for line in self.sql_on.split('\n') for w in line.split()
+            w
+            for line in self.sql_on.split('\n')
+            for w in line.split()
             # not a comment line
             if not line.replace(' ', '').startswith('--')
             # doesn't contain lookml syntax
@@ -97,7 +90,6 @@ class Explore(LabeledResource):
         joined_views = [ExploreView(j) for j in self.data.get('joins', [])]
         self.views = [ExploreView(self.data)] + joined_views
 
-
     def view_label_issues(self, acronyms=[], abbreviations=[]):
         results = {}
         for v in self.views:
@@ -117,21 +109,16 @@ class Model(object):
     name = attr.ib(init=False)
 
     def __attrs_post_init__(self):
-        self.included_views = [
-            i[:-len('.view')] for i in self.data.get('include', [])
-        ]
+        self.included_views = [i[: -len('.view')] for i in self.data.get('include', [])]
         self.explores = [Explore(e) for e in self.data['explores']]
         self.name = self.data['_model']
-
 
     def explore_views(self):
         return [v for e in self.explores for v in e.views]
 
-
     def unused_includes(self):
         explore_view_sources = [e.source_view for e in self.explore_views()]
         return sorted(list(set(self.included_views) - set(explore_view_sources)))
-
 
     def explore_label_issues(self, acronyms=[], abbreviations=[]):
         results = {}
@@ -153,7 +140,6 @@ class View(LabeledResource):
     dimension_groups = attr.ib(init=False, repr=False)
     measures = attr.ib(init=False, repr=False)
 
-
     def __attrs_post_init__(self):
         self.name = self.data['_view']
         self.label = self.name.replace('_', ' ').title()
@@ -162,11 +148,9 @@ class View(LabeledResource):
         self.dimensions = [Dimension(d) for d in self.data.get('dimensions', [])]
         self.measures = [Measure(m) for m in self.data.get('measures', [])]
         self.dimension_groups = [
-            DimensionGroup(dg)
-            for dg in self.data.get('dimension_groups', [])
+            DimensionGroup(dg) for dg in self.data.get('dimension_groups', [])
         ]
         self.fields = self.dimensions + self.dimension_groups + self.measures
-
 
     def field_label_issues(self, acronyms=[], abbreviations=[]):
         results = {}
@@ -176,7 +160,6 @@ class View(LabeledResource):
                 continue
             results[f.label] = issues
         return results
-
 
     def has_primary_key(self):
         return any(d.is_primary_key for d in self.dimensions)
@@ -198,7 +181,7 @@ class Dimension(LabeledResource):
         if 'label' in self.data:
             self.label = self.data['label']
         self.description = self.data.get('description')
-        self.is_primary_key = (self.data.get('primary_key') is True)
+        self.is_primary_key = self.data.get('primary_key') is True
 
 
 @attr.s
@@ -255,22 +238,17 @@ class LookML(object):
         view_dicts = [self._view(vn) for vn in self._view_file_names()]
         self.views = [View(v) for v in view_dicts]
 
-
     def _view_file_names(self):
         return sorted(self.data['file']['view'].keys())
-
 
     def _view(self, view_file_name):
         return self.data['file']['view'][view_file_name]['view'][view_file_name]
 
-
     def _model_file_names(self):
         return sorted(self.data['file']['model'].keys())
 
-
     def _model(self, model_file_name):
         return self.data['file']['model'][model_file_name]['model'][model_file_name]
-
 
     def all_explore_views(self):
         explore_views = []
@@ -278,12 +256,10 @@ class LookML(object):
             explore_views += m.explore_views()
         return explore_views
 
-
     def unused_view_files(self):
         view_names = [v.name for v in self.views]
         explore_view_names = [ev.source_view for ev in self.all_explore_views()]
         return sorted(list(set(view_names) - set(explore_view_names)))
-
 
     def view_label_issues(self, acronyms=[], abbreviations=[]):
         results = {}
@@ -295,6 +271,21 @@ class LookML(object):
         return results
 
 
+def read_lint_config(repo_path):
+    # read .lintconfig
+    full_path = os.path.expanduser(repo_path)
+    config_filepath = os.path.join(full_path, '.lintconfig.yml')
+    acronyms = []
+    abbreviations = []
+    if os.path.isfile(config_filepath):
+        with open(config_filepath) as f:
+            config = yaml.load(f)
+            acronyms = config.get('acronyms', acronyms)
+            abbreviations = config.get('abbreviations', abbreviations)
+    lint_config = {'acronyms': acronyms, 'abbreviations': abbreviations}
+    return lint_config
+
+
 def parse_repo(full_path):
     cmd = (
         f'cd {full_path} && '
@@ -304,50 +295,14 @@ def parse_repo(full_path):
     output, error = process.communicate()
 
 
-def lint(repo_path):
-    # parse lookml
+def lookml_from_repo_path(repo_path):
     full_path = os.path.expanduser(repo_path)
     parse_repo(full_path)
-
-    # read .lintconfig
-    config_filepath = os.path.join(full_path, '.lintconfig.yml')
-    acronyms = []
-    abbreviations = []
-    if os.path.isfile(config_filepath):
-        with open(config_filepath) as f:
-            config = yaml.load(f)
-            acronyms = config.get('acronyms', acronyms)
-            abbreviations = config.get('abbreviations', abbreviations)
-
-    # read in lookml json representation
     lkml = LookML('/tmp/lookmlint.json')
+    return lkml
 
-    # check for unused view files
-    unused_view_files = lkml.unused_view_files()
 
-    # check for unused includes
-    unused_includes = {
-        m.name: m.unused_includes()
-        for m in lkml.models
-        if m.unused_includes() != []
-    }
-
-    # check for missing primary keys
-    views_missing_primary_keys = [v.name for v in lkml.views if not v.has_primary_key()]
-
-    # check for raw SQL field references
-    raw_sql_refs = {}
-    for m in lkml.models:
-        for e in m.explores:
-            for v in e.views:
-                if not v.contains_raw_sql_ref():
-                    continue
-                if m.name not in raw_sql_refs:
-                    raw_sql_refs[m.name] = {}
-                if e.name not in raw_sql_refs[m.name]:
-                    raw_sql_refs[m.name][e.name] = {}
-                raw_sql_refs[m.name][e.name][v.name] = v.sql_on
-
+def lint_labels(lkml, acronyms, abbreviations):
 
     # check for acronym and abbreviation issues
     explore_label_issues = {}
@@ -380,6 +335,59 @@ def lint(repo_path):
         label_issues['fields'] = field_label_issues
     if view_label_issues != {}:
         label_issues['views'] = view_label_issues
+    return label_issues
+
+
+def lint_sql_references(lkml):
+    # check for raw SQL field references
+    raw_sql_refs = {}
+    for m in lkml.models:
+        for e in m.explores:
+            for v in e.views:
+                if not v.contains_raw_sql_ref():
+                    continue
+                if m.name not in raw_sql_refs:
+                    raw_sql_refs[m.name] = {}
+                if e.name not in raw_sql_refs[m.name]:
+                    raw_sql_refs[m.name][e.name] = {}
+                raw_sql_refs[m.name][e.name][v.name] = v.sql_on
+    return raw_sql_refs
+
+
+def lint_view_primary_keys(lkml):
+    # check for missing primary keys
+    views_missing_primary_keys = [v.name for v in lkml.views if not v.has_primary_key()]
+    return views_missing_primary_keys
+
+
+def lint_unused_includes(lkml):
+    # check for unused includes
+    unused_includes = {
+        m.name: m.unused_includes() for m in lkml.models if m.unused_includes() != []
+    }
+    return unused_includes
+
+
+def lint_unused_view_files(lkml):
+    # check for unused view files
+    unused_view_files = lkml.unused_view_files()
+    return unused_view_files
+
+
+def pprint_output(section_name, issues, ignore_yaml_default_flow_style=True):
+    print(section_name)
+    print('-' * 50)
+    yaml_default_flow_style = False if ignore_yaml_default_flow_style else None
+    print(yaml.dump(issues, default_flow_style=yaml_default_flow_style))
+    print('\n')
+
+
+def lint(lkml, acronyms=[], abbreviations=[]):
+    unused_view_files = lint_unused_view_files(lkml)
+    unused_includes = lint_unused_includes(lkml)
+    views_missing_primary_keys = lint_view_primary_keys(lkml)
+    raw_sql_refs = lint_sql_references(lkml)
+    label_issues = lint_labels(lkml, acronyms, abbreviations)
 
     # assemble overall issues dict
     issues = {}
@@ -399,28 +407,15 @@ def lint(repo_path):
 
     # print issues
     if 'unused_view_files' in issues:
-        print('Unused View Files')
-        print('-'*50)
-        print(yaml.dump(issues['unused_view_files'], default_flow_style=False))
-        print('\n')
+        pprint_output('Unused View Files', issues['unused_view_files'])
     if 'unused_includes' in issues:
-        print('Unused Includes')
-        print('-'*50)
-        print(yaml.dump(issues['unused_includes'], default_flow_style=False))
-        print('\n')
+        pprint_output('Unused Includes', issues['unused_includes'])
     if 'views_missing_primary_keys' in issues:
-        print('Views Missing Primary Keys')
-        print('-'*50)
-        print(yaml.dump(issues['views_missing_primary_keys'], default_flow_style=False))
-        print('\n')
+        pprint_output('Views Missing Primary Keys', issues['views_missing_primary_keys'])
     if 'raw_sql_refs' in issues:
-        print('Raw SQL Field References')
-        print('-'*50)
-        print(yaml.dump(issues['raw_sql_refs'], default_flow_style=False))
-        print('\n')
+        pprint_output('Raw SQL Field References', issues['raw_sql_refs'])
     if 'label_issues' in issues:
         for section, issues in issues['label_issues'].items():
-            print('Label Issues - {}'.format(section.replace('_', ' ').title()))
-            print('-'*50)
-            print(yaml.dump(issues))
-            print('\n')
+            section_name = 'Label Issues - {}'.format(section.replace('_', ' ').title())
+            pprint_output(section_name, issues, ignore_yaml_default_flow_style=False)
+    return issues
