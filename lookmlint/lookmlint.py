@@ -374,12 +374,13 @@ def lint_unused_view_files(lkml):
     return unused_view_files
 
 
-def pprint_output(section_name, issues, ignore_yaml_default_flow_style=True):
-    print(section_name)
-    print('-' * 50)
+def format_output(section_name, issues, ignore_yaml_default_flow_style=True):
     yaml_default_flow_style = False if ignore_yaml_default_flow_style else None
-    print(yaml.dump(issues, default_flow_style=yaml_default_flow_style))
-    print('\n')
+    return '\n'.join([
+        section_name,
+        '-'*50,
+        yaml.dump(issues, default_flow_style=yaml_default_flow_style),
+    ])
 
 
 def lint(lkml, acronyms=[], abbreviations=[]):
@@ -407,15 +408,15 @@ def lint(lkml, acronyms=[], abbreviations=[]):
 
     # print issues
     if 'unused_view_files' in issues:
-        pprint_output('Unused View Files', issues['unused_view_files'])
+        print(format_output('Unused View Files', issues['unused_view_files']))
     if 'unused_includes' in issues:
-        pprint_output('Unused Includes', issues['unused_includes'])
+        print(format_output('Unused Includes', issues['unused_includes']))
     if 'views_missing_primary_keys' in issues:
-        pprint_output('Views Missing Primary Keys', issues['views_missing_primary_keys'])
+        print(format_output('Views Missing Primary Keys', issues['views_missing_primary_keys']))
     if 'raw_sql_refs' in issues:
-        pprint_output('Raw SQL Field References', issues['raw_sql_refs'])
+        print(format_output('Raw SQL Field References', issues['raw_sql_refs']))
     if 'label_issues' in issues:
         for section, issues in issues['label_issues'].items():
             section_name = 'Label Issues - {}'.format(section.replace('_', ' ').title())
-            pprint_output(section_name, issues, ignore_yaml_default_flow_style=False)
+            print(format_output(section_name, issues, ignore_yaml_default_flow_style=False))
     return issues
