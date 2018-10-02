@@ -12,9 +12,13 @@ class LabeledResource(object):
     label = attr.ib(init=False, default=None, repr=False)
 
     def contains_bad_acronym_usage(self, acronym):
+        words = self.label.split(' ')
+        # drop plural 's' from words
+        if not acronym.lower().endswith('s'):
+            words = [w if not w.endswith('s') else w[:len(w)-1] for w in words]
         return any(
-            acronym.upper() == k.upper() and k != k.upper()
-            for k in self.label.split(' ')
+            acronym.upper() == w.upper() and w == w.title()
+            for w in words
         )
 
     def contains_bad_abbreviation_usage(self, abbreviation):
