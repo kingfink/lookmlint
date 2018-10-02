@@ -115,7 +115,10 @@ class Model(object):
     name = attr.ib(init=False)
 
     def __attrs_post_init__(self):
-        self.included_views = [i[: -len('.view')] for i in self.data.get('include', [])]
+        includes = self.data.get('include', [])
+        if isinstance(includes, str):
+            includes = [includes]
+        self.included_views = [i[: -len('.view')] for i in includes]
         self.explores = [Explore(e) for e in self.data['explores']]
         self.name = self.data['_model']
 
@@ -123,6 +126,10 @@ class Model(object):
         return [v for e in self.explores for v in e.views]
 
     def unused_includes(self):
+        # if all views in a project are imported into a model,
+        # don't suggest any includes are unused
+        if self.included_views == ['*']:
+            return []
         explore_view_sources = [e.source_view for e in self.explore_views()]
         return sorted(list(set(self.included_views) - set(explore_view_sources)))
 
