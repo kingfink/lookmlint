@@ -15,7 +15,7 @@ class LabeledResource(object):
         words = self.label.split(' ')
         # drop plural 's' from words
         if not acronym.lower().endswith('s'):
-            words = [w if not w.endswith('s') else w[:len(w)-1] for w in words]
+            words = [w if not w.endswith('s') else w[:-1] for w in words]
         return any(
             acronym.upper() == w.upper() and w == w.title()
             for w in words
