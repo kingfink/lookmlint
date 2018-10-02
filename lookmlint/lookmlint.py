@@ -40,10 +40,12 @@ class ExploreView(LabeledResource):
     source_view = attr.ib(init=False, repr=False)
 
     def __attrs_post_init__(self):
-        source_hierarchy = ['from', '_join', '_explore']
+        source_hierarchy = ['from', 'view_name', '_join', '_explore']
         name_hierarchy = ['view_name', '_join', '_explore']
         self.source_view = self._get_first_key(source_hierarchy)
         self.name = self._get_first_key(name_hierarchy)
+        # this label needs to update based on the source view.
+        # currently handling this at the LookML object level.
         self.label = self.name.replace('_', ' ').title()
         if 'view_label' in self.data:
             self.label = self.data['view_label']
@@ -237,6 +239,12 @@ class LookML(object):
         self.models = [Model(m) for m in model_dicts]
         view_dicts = [self._view(vn) for vn in self._view_file_names()]
         self.views = [View(v) for v in view_dicts]
+        for m in self.models:
+            for e in m.explores:
+                for ev in e.views:
+                    source_view = next(v for v in self.views if v.name == ev.source_view)
+                    if source_view.label != source_view.name.replace('_', ' ').title():
+                        ev.label = source_view.label
 
     def _view_file_names(self):
         return sorted(self.data['file']['view'].keys())
