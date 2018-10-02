@@ -164,6 +164,7 @@ class View(LabeledResource):
             DimensionGroup(dg) for dg in self.data.get('dimension_groups', [])
         ]
         self.fields = self.dimensions + self.dimension_groups + self.measures
+        self.extends = [v.strip('*') for v in self.data.get('extends', [])]
 
     def field_label_issues(self, acronyms=[], abbreviations=[]):
         results = {}
@@ -278,7 +279,8 @@ class LookML(object):
     def unused_view_files(self):
         view_names = [v.name for v in self.views]
         explore_view_names = [ev.source_view for ev in self.all_explore_views()]
-        return sorted(list(set(view_names) - set(explore_view_names)))
+        extended_views = [exv for v in self.views for exv in v.extends]
+        return sorted(list(set(view_names) - set(explore_view_names) - set(extended_views)))
 
     def view_label_issues(self, acronyms=[], abbreviations=[]):
         results = {}
