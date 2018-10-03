@@ -51,9 +51,8 @@ class ExploreView(LabeledResource):
         self.name = self._get_first_key(name_hierarchy)
         # this label needs to update based on the source view.
         # currently handling this at the LookML object level.
-        self.label = self.name.replace('_', ' ').title()
-        if 'view_label' in self.data:
-            self.label = self.data['view_label']
+        self.view_label = self.data.get('view_label')
+        self.label = self.view_label if self.view_label else self.name.replace('_', ' ').title()
         self.explore = self.data['_explore']
         self.sql_on = self.data.get('sql_on')
 
@@ -256,9 +255,12 @@ class LookML(object):
         self.models = [Model(m) for m in model_dicts]
         view_dicts = [self._view(vn) for vn in self._view_file_names()]
         self.views = [View(v) for v in view_dicts]
+        # update target exploration view labels based on source view labels
         for m in self.models:
             for e in m.explores:
                 for ev in e.views:
+                    if ev.view_label:
+                        continue
                     source_view = next(v for v in self.views if v.name == ev.source_view)
                     if source_view.label != source_view.name.replace('_', ' ').title():
                         ev.label = source_view.label
