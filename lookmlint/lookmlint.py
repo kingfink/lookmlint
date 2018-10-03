@@ -289,15 +289,6 @@ class LookML(object):
         extended_views = [exv for v in self.views for exv in v.extends]
         return sorted(list(set(view_names) - set(explore_view_names) - set(extended_views)))
 
-    def view_label_issues(self, acronyms=[], abbreviations=[]):
-        results = {}
-        for v in self.views:
-            issues = v.label_issues(acronyms, abbreviations)
-            if issues == []:
-                continue
-            results[v.label] = issues
-        return results
-
 
 def read_lint_config(repo_path):
     # read .lintconfig
@@ -351,7 +342,6 @@ def lint_labels(lkml, acronyms, abbreviations):
         issues = v.field_label_issues(acronyms, abbreviations)
         if issues != {}:
             field_label_issues[v.name] = issues
-    view_label_issues = lkml.view_label_issues(acronyms, abbreviations)
 
     # create overall labels issues dict
     label_issues = {}
@@ -361,8 +351,6 @@ def lint_labels(lkml, acronyms, abbreviations):
         label_issues['explore_views'] = explore_view_label_issues
     if field_label_issues != {}:
         label_issues['fields'] = field_label_issues
-    if view_label_issues != {}:
-        label_issues['views'] = view_label_issues
     return label_issues
 
 
