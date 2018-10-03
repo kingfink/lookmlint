@@ -1,3 +1,4 @@
+from collections import Counter
 import json
 import os
 import subprocess
@@ -104,6 +105,10 @@ class Explore(LabeledResource):
                 continue
             results[v.label] = issues
         return results
+
+    def duplicated_view_labels(self):
+        c = Counter(v.label for v in self.views)
+        return {label: n for label, n in c.items() if n > 1}
 
 
 @attr.s
@@ -357,6 +362,20 @@ def lint_labels(lkml, acronyms, abbreviations):
     if view_label_issues != {}:
         label_issues['views'] = view_label_issues
     return label_issues
+
+
+def lint_duplicate_view_labels(lkml):
+    issues = {}
+    for m in lkml.models:
+        for e in m.explores:
+            dupes = e.duplicated_view_labels()
+            if dupes == {}:
+                continue
+            if m.name not in issues:
+                issues[m.name] = {}
+            if e.name not in issues[m.name]:
+                issues[m.name][e.name] = dupes
+    return issues
 
 
 def lint_sql_references(lkml):

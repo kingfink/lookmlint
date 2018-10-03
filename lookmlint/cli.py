@@ -6,7 +6,15 @@ import click
 from . import lookmlint
 
 
-CHECK_OPTIONS = ['all', 'labels', 'sql', 'includes', 'view-files', 'primary-keys']
+CHECK_OPTIONS = [
+    'all',
+    'labels',
+    'sql',
+    'includes',
+    'view-files',
+    'primary-keys',
+    'duplicate-labels',
+]
 
 
 @click.group('cli')
@@ -64,6 +72,12 @@ def lint(repo_path, checks):
         errors_found = errors_found or check_errors_found
         if check_errors_found:
             all_output += lookmlint.format_output('Views Missing Primary Keys', issues)
+    if 'duplicate-labels' in checks:
+        issues = lookmlint.lint_duplicate_view_labels(lkml)
+        check_errors_found = not (issues == [] or issues == {})
+        errors_found = errors_found or check_errors_found
+        if check_errors_found:
+            all_output += lookmlint.format_output('Duplicate View Labels', issues)
 
     if errors_found:
         raise click.ClickException(all_output)
