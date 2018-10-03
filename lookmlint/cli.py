@@ -1,7 +1,7 @@
 import os
 
-
 import click
+import yaml
 
 from . import lookmlint
 
@@ -15,6 +15,17 @@ CHECK_OPTIONS = [
     'primary-keys',
     'duplicate-labels',
 ]
+
+
+def format_output(section_name, issues, ignore_yaml_default_flow_style=True):
+    yaml_default_flow_style = False if ignore_yaml_default_flow_style else None
+    return '\n'.join(
+        [
+            section_name,
+            '-' * len(section_name),
+            yaml.dump(issues, default_flow_style=yaml_default_flow_style),
+        ]
+    )
 
 
 @click.group('cli')
@@ -32,55 +43,46 @@ def lint(repo_path, checks):
     for c in checks:
         if c not in CHECK_OPTIONS:
             raise click.BadOptionUsage(f'{c} not in {CHECK_OPTIONS}')
-    lkml = lookmlint.lookml_from_repo_path(repo_path)
-    all_output = '\n'
-    errors_found = False
     if 'all' in checks:
         checks = list(set(CHECK_OPTIONS) - set(['all']))
+
+    lkml = lookmlint.lookml_from_repo_path(repo_path)
+
+    def run_check(fn, label):
+        issues = fn(lkml)
+        if issues == [] or issues == {}:
+            return ''
+        return format_output(label, issues)
+
+    all_output = ''
     if 'labels' in checks:
         lint_config = lookmlint.read_lint_config(repo_path)
         issues = lookmlint.lint_labels(
             lkml, lint_config['acronyms'], lint_config['abbreviations']
         )
-        check_errors_found = not (issues == [] or issues == {})
-        errors_found = errors_found or check_errors_found
-        if check_errors_found:
-            all_output += lookmlint.format_output(
+        if not (issues == [] or issues == {}):
+            all_output += format_output(
                 'Label Issues', issues, ignore_yaml_default_flow_style=False
             )
     if 'sql' in checks:
-        issues = lookmlint.lint_sql_references(lkml)
-        check_errors_found = not (issues == [] or issues == {})
-        errors_found = errors_found or check_errors_found
-        if check_errors_found:
-            all_output += lookmlint.format_output('Raw SQL Field References', issues)
+        all_output += run_check(
+            lookmlint.lint_sql_references, 'Raw SQL Field References'
+        )
     if 'includes' in checks:
-        issues = lookmlint.lint_unused_includes(lkml)
-        check_errors_found = not (issues == [] or issues == {})
-        errors_found = errors_found or check_errors_found
-        if check_errors_found:
-            all_output += lookmlint.format_output('Unused Includes', issues)
+        all_output += run_check(lookmlint.lint_unused_includes, 'Unused Includes')
     if 'view-files' in checks:
-        issues = lookmlint.lint_unused_view_files(lkml)
-        check_errors_found = not (issues == [] or issues == {})
-        errors_found = errors_found or check_errors_found
-        if check_errors_found:
-            all_output += lookmlint.format_output('Unused View Files', issues)
+        all_output += run_check(lookmlint.lint_unused_view_files, 'Unused View Files')
     if 'primary-keys' in checks:
-        issues = lookmlint.lint_view_primary_keys(lkml)
-        check_errors_found = not (issues == [] or issues == {})
-        errors_found = errors_found or check_errors_found
-        if check_errors_found:
-            all_output += lookmlint.format_output('Views Missing Primary Keys', issues)
+        all_output += run_check(
+            lookmlint.lint_view_primary_keys, 'Views Missing Primary Keys'
+        )
     if 'duplicate-labels' in checks:
-        issues = lookmlint.lint_duplicate_view_labels(lkml)
-        check_errors_found = not (issues == [] or issues == {})
-        errors_found = errors_found or check_errors_found
-        if check_errors_found:
-            all_output += lookmlint.format_output('Duplicate View Labels', issues)
+        all_output += run_check(
+            lookmlint.lint_duplicate_labels, 'Duplicate View Labels'
+        )
 
-    if errors_found:
-        raise click.ClickException(all_output)
+    if all_output != '':
+        raise click.ClickException('\n' + all_output)
 
 
 cli.add_command(lint)

@@ -8,56 +8,36 @@ import yaml
 
 
 @attr.s
-class LabeledResource(object):
-
-    label = attr.ib(init=False, default=None, repr=False)
-
-    def contains_bad_acronym_usage(self, acronym):
-        words = self.label.split(' ')
-        # drop plural 's' from words
-        if not acronym.lower().endswith('s'):
-            words = [w if not w.endswith('s') else w[:-1] for w in words]
-        return any(
-            acronym.upper() == w.upper() and w == w.title()
-            for w in words
-        )
-
-    def contains_bad_abbreviation_usage(self, abbreviation):
-        return any(abbreviation.lower() == k.lower() for k in self.label.split(' '))
-
-    def label_issues(self, acronyms, abbreviations):
-        acronyms_used = [
-            a.upper() for a in acronyms if self.contains_bad_acronym_usage(a)
-        ]
-        abbreviations_used = [
-            a.title() for a in abbreviations if self.contains_bad_abbreviation_usage(a)
-        ]
-        return acronyms_used + abbreviations_used
-
-
-@attr.s
-class ExploreView(LabeledResource):
+class ExploreView(object):
 
     data = attr.ib(repr=False)
     explore = attr.ib(init=False, repr=False)
-    label = attr.ib(init=False)
     name = attr.ib(init=False, repr=False)
     source_view = attr.ib(init=False, repr=False)
 
     def __attrs_post_init__(self):
-        source_hierarchy = ['from', 'view_name', '_join', '_explore']
-        name_hierarchy = ['view_name', '_join', '_explore']
-        self.source_view = self._get_first_key(source_hierarchy)
-        self.name = self._get_first_key(name_hierarchy)
-        # this label needs to update based on the source view.
-        # currently handling this at the LookML object level.
-        self.view_label = self.data.get('view_label')
-        self.label = self.view_label if self.view_label else self.name.replace('_', ' ').title()
+        self.from_view_name = self.data.get('from')
+        self.view_name = self.data.get('view_name')
+        self.join_name = self.data.get('_join')
         self.explore = self.data['_explore']
         self.sql_on = self.data.get('sql_on')
+        self.view_label = self.data.get('view_label')
+        self.name = self._first_existing([self.view_name, self.join_name, self.explore])
 
-    def _get_first_key(self, keys):
-        return next(self.data[k] for k in keys if k in self.data)
+    def _first_existing(self, values):
+        return next(v for v in values if v is not None)
+
+    def source_view_name(self):
+        priority = [self.from_view_name, self.view_name, self.join_name, self.explore]
+        return self._first_existing(priority)
+
+    def display_label(self):
+        priority = [
+            self.view_label,
+            self.source_view.label,
+            self.name.replace('_', ' ').title(),
+        ]
+        return self._first_existing(priority)
 
     def contains_raw_sql_ref(self):
         if not self.sql_on:
@@ -79,7 +59,7 @@ class ExploreView(LabeledResource):
 
 
 @attr.s
-class Explore(LabeledResource):
+class Explore(object):
 
     data = attr.ib(repr=False)
     label = attr.ib(init=False)
@@ -89,24 +69,25 @@ class Explore(LabeledResource):
 
     def __attrs_post_init__(self):
         self.name = self.data.get('_explore')
-        self.label = self.name.replace('_', ' ').title()
-        if 'label' in self.data:
-            self.label = self.data['label']
+        self.label = self.data.get('label')
         self.model = self.data['_model']
         joined_views = [ExploreView(j) for j in self.data.get('joins', [])]
         self.views = [ExploreView(self.data)] + joined_views
 
+    def display_label(self):
+        return self.label if self.label else self.name.replace('_', ' ').title()
+
     def view_label_issues(self, acronyms=[], abbreviations=[]):
         results = {}
         for v in self.views:
-            issues = v.label_issues(acronyms, abbreviations)
+            issues = label_issues(v.display_label(), acronyms, abbreviations)
             if issues == []:
                 continue
-            results[v.label] = issues
+            results[v.display_label()] = issues
         return results
 
     def duplicated_view_labels(self):
-        c = Counter(v.label for v in self.views)
+        c = Counter(v.display_label() for v in self.views)
         return {label: n for label, n in c.items() if n > 1}
 
 
@@ -134,13 +115,13 @@ class Model(object):
         # don't suggest any includes are unused
         if self.included_views == ['*']:
             return []
-        explore_view_sources = [e.source_view for e in self.explore_views()]
+        explore_view_sources = [v.source_view.name for v in self.explore_views()]
         return sorted(list(set(self.included_views) - set(explore_view_sources)))
 
     def explore_label_issues(self, acronyms=[], abbreviations=[]):
         results = {}
         for e in self.explores:
-            issues = e.label_issues(acronyms, abbreviations)
+            issues = label_issues(e.display_label(), acronyms, abbreviations)
             if issues == []:
                 continue
             results[e.label] = issues
@@ -148,7 +129,7 @@ class Model(object):
 
 
 @attr.s
-class View(LabeledResource):
+class View(object):
 
     data = attr.ib(repr=False)
     name = attr.ib(init=False)
@@ -159,9 +140,7 @@ class View(LabeledResource):
 
     def __attrs_post_init__(self):
         self.name = self.data['_view']
-        self.label = self.name.replace('_', ' ').title()
-        if 'label' in self.data:
-            self.label = self.data['label']
+        self.label = self.data.get('label')
         self.dimensions = [Dimension(d) for d in self.data.get('dimensions', [])]
         self.measures = [Measure(m) for m in self.data.get('measures', [])]
         self.dimension_groups = [
@@ -173,7 +152,7 @@ class View(LabeledResource):
     def field_label_issues(self, acronyms=[], abbreviations=[]):
         results = {}
         for f in self.fields:
-            issues = f.label_issues(acronyms, abbreviations)
+            issues = label_issues(f.display_label(), acronyms, abbreviations)
             if issues == []:
                 continue
             results[f.label] = issues
@@ -184,7 +163,7 @@ class View(LabeledResource):
 
 
 @attr.s
-class Dimension(LabeledResource):
+class Dimension(object):
 
     data = attr.ib(repr=False)
     name = attr.ib(init=False, repr=False)
@@ -195,15 +174,16 @@ class Dimension(LabeledResource):
     def __attrs_post_init__(self):
         self.name = self.data['_dimension']
         self.type = self.data.get('type', 'string')
-        self.label = self.name.replace('_', ' ').title()
-        if 'label' in self.data:
-            self.label = self.data['label']
+        self.label = self.data.get('label')
         self.description = self.data.get('description')
         self.is_primary_key = self.data.get('primary_key') is True
 
+    def display_label(self):
+        return self.label if self.label else self.name.replace('_', ' ').title()
+
 
 @attr.s
-class DimensionGroup(LabeledResource):
+class DimensionGroup(object):
 
     data = attr.ib(repr=False)
     name = attr.ib(init=False, repr=False)
@@ -215,15 +195,16 @@ class DimensionGroup(LabeledResource):
     def __attrs_post_init__(self):
         self.name = self.data['_dimension_group']
         self.type = self.data.get('type', 'string')
-        self.label = self.name.replace('_', ' ').title()
-        if 'label' in self.data:
-            self.label = self.data['label']
+        self.label = self.data.get('label')
         self.description = self.data.get('description')
         self.timeframes = self.data.get('timeframes')
 
+    def display_label(self):
+        return self.label if self.label else self.name.replace('_', ' ').title()
+
 
 @attr.s
-class Measure(LabeledResource):
+class Measure(object):
 
     data = attr.ib(repr=False)
     name = attr.ib(init=False, repr=False)
@@ -234,10 +215,11 @@ class Measure(LabeledResource):
     def __attrs_post_init__(self):
         self.name = self.data['_measure']
         self.type = self.data.get('type')
-        self.label = self.name.replace('_', ' ').title()
-        if 'label' in self.data:
-            self.label = self.data['label']
+        self.label = self.data.get('label')
         self.description = self.data.get('description')
+
+    def display_label(self):
+        return self.label if self.label else self.name.replace('_', ' ').title()
 
 
 @attr.s
@@ -255,15 +237,14 @@ class LookML(object):
         self.models = [Model(m) for m in model_dicts]
         view_dicts = [self._view(vn) for vn in self._view_file_names()]
         self.views = [View(v) for v in view_dicts]
-        # update target exploration view labels based on source view labels
+        # match explore views with their source views
         for m in self.models:
             for e in m.explores:
                 for ev in e.views:
-                    if ev.view_label:
-                        continue
-                    source_view = next(v for v in self.views if v.name == ev.source_view)
-                    if source_view.label != source_view.name.replace('_', ' ').title():
-                        ev.label = source_view.label
+                    source_view = next(
+                        v for v in self.views if v.name == ev.source_view_name()
+                    )
+                    ev.source_view = source_view
 
     def _view_file_names(self):
         return sorted(self.data['file']['view'].keys())
@@ -285,9 +266,11 @@ class LookML(object):
 
     def unused_view_files(self):
         view_names = [v.name for v in self.views]
-        explore_view_names = [ev.source_view for ev in self.all_explore_views()]
+        explore_view_names = [v.source_view.name for v in self.all_explore_views()]
         extended_views = [exv for v in self.views for exv in v.extends]
-        return sorted(list(set(view_names) - set(explore_view_names) - set(extended_views)))
+        return sorted(
+            list(set(view_names) - set(explore_view_names) - set(extended_views))
+        )
 
 
 def read_lint_config(repo_path):
@@ -319,6 +302,26 @@ def lookml_from_repo_path(repo_path):
     parse_repo(full_path)
     lkml = LookML('/tmp/lookmlint.json')
     return lkml
+
+
+def label_issues(label, acronyms=[], abbreviations=[]):
+    def _contains_bad_acronym_usage(label, acronym):
+        words = label.split(' ')
+        # drop plural 's' from words
+        if not acronym.lower().endswith('s'):
+            words = [w if not w.endswith('s') else w[:-1] for w in words]
+        return any(acronym.upper() == w.upper() and w == w.title() for w in words)
+
+    def _contains_bad_abbreviation_usage(label, abbreviation):
+        return any(abbreviation.lower() == k.lower() for k in label.split(' '))
+
+    acronyms_used = [
+        a.upper() for a in acronyms if _contains_bad_acronym_usage(label, a)
+    ]
+    abbreviations_used = [
+        a.title() for a in abbreviations if _contains_bad_abbreviation_usage(label, a)
+    ]
+    return acronyms_used + abbreviations_used
 
 
 def lint_labels(lkml, acronyms, abbreviations):
@@ -404,21 +407,13 @@ def lint_unused_view_files(lkml):
     return unused_view_files
 
 
-def format_output(section_name, issues, ignore_yaml_default_flow_style=True):
-    yaml_default_flow_style = False if ignore_yaml_default_flow_style else None
-    return '\n'.join([
-        section_name,
-        '-'*50,
-        yaml.dump(issues, default_flow_style=yaml_default_flow_style),
-    ])
-
-
 def lint(lkml, acronyms=[], abbreviations=[]):
     unused_view_files = lint_unused_view_files(lkml)
     unused_includes = lint_unused_includes(lkml)
     views_missing_primary_keys = lint_view_primary_keys(lkml)
     raw_sql_refs = lint_sql_references(lkml)
     label_issues = lint_labels(lkml, acronyms, abbreviations)
+    duplicate_view_labels = lint_duplicate_view_labels(lkml)
 
     # assemble overall issues dict
     issues = {}
@@ -428,25 +423,10 @@ def lint(lkml, acronyms=[], abbreviations=[]):
         issues['unused_includes'] = unused_includes
     if views_missing_primary_keys != []:
         issues['views_missing_primary_keys'] = views_missing_primary_keys
-    if label_issues != {}:
-        issues['label_issues'] = label_issues
     if raw_sql_refs != {}:
         issues['raw_sql_refs'] = raw_sql_refs
-
-    if issues == {}:
-        print('No issues found!')
-
-    # print issues
-    if 'unused_view_files' in issues:
-        print(format_output('Unused View Files', issues['unused_view_files']))
-    if 'unused_includes' in issues:
-        print(format_output('Unused Includes', issues['unused_includes']))
-    if 'views_missing_primary_keys' in issues:
-        print(format_output('Views Missing Primary Keys', issues['views_missing_primary_keys']))
-    if 'raw_sql_refs' in issues:
-        print(format_output('Raw SQL Field References', issues['raw_sql_refs']))
-    if 'label_issues' in issues:
-        for section, issues in issues['label_issues'].items():
-            section_name = 'Label Issues - {}'.format(section.replace('_', ' ').title())
-            print(format_output(section_name, issues, ignore_yaml_default_flow_style=False))
+    if label_issues != {}:
+        issues['label_issues'] = label_issues
+    if duplicate_view_labels != {}:
+        issues['duplicate_view_labels'] = duplicate_view_labels
     return issues
