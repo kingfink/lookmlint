@@ -124,7 +124,7 @@ class Model(object):
             issues = label_issues(e.display_label(), acronyms, abbreviations)
             if issues == []:
                 continue
-            results[e.label] = issues
+            results[e.display_label()] = issues
         return results
 
 
@@ -155,7 +155,7 @@ class View(object):
             issues = label_issues(f.display_label(), acronyms, abbreviations)
             if issues == []:
                 continue
-            results[f.label] = issues
+            results[f.display_label()] = issues
         return results
 
     def has_primary_key(self):
