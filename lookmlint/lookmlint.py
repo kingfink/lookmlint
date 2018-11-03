@@ -188,6 +188,7 @@ class Dimension(object):
         self.type = self.data.get('type', 'string')
         self.label = self.data.get('label')
         self.description = self.data.get('description')
+        self.sql = self.data.get('sql')
         self.is_primary_key = self.data.get('primary_key') is True
         self.is_hidden = self.data.get('hidden') is True
 
@@ -210,6 +211,7 @@ class DimensionGroup(object):
         self.type = self.data.get('type', 'string')
         self.label = self.data.get('label')
         self.description = self.data.get('description')
+        self.sql = self.data.get('sql')
         self.timeframes = self.data.get('timeframes')
         self.is_hidden = self.data.get('hidden') is True
 
@@ -231,6 +233,7 @@ class Measure(object):
         self.type = self.data.get('type')
         self.label = self.data.get('label')
         self.description = self.data.get('description')
+        self.sql = self.data.get('sql')
         self.is_hidden = self.data.get('hidden') is True
 
     def display_label(self):
@@ -432,7 +435,11 @@ def lint_unused_view_files(lkml):
 
 def lint_missing_view_sql_definitions(lkml):
     return [
-        v.name for v in lkml.views if not v.has_sql_definition() and v.extends == []
+        v.name
+        for v in lkml.views
+        if not v.has_sql_definition()
+        and v.extends == []
+        and any(f.sql and '${TABLE}' in f.sql for f in v.fields)
     ]
 
 
