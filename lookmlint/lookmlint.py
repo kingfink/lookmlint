@@ -156,6 +156,8 @@ class View(object):
     def field_label_issues(self, acronyms=[], abbreviations=[]):
         results = {}
         for f in self.fields:
+            if f.is_hidden:
+                continue
             issues = label_issues(f.display_label(), acronyms, abbreviations)
             if issues == []:
                 continue
@@ -176,7 +178,7 @@ class View(object):
 class Dimension(object):
 
     data = attr.ib(repr=False)
-    name = attr.ib(init=False, repr=False)
+    name = attr.ib(init=False, repr=True)
     type = attr.ib(init=False)
     label = attr.ib(init=False)
     description = attr.ib(init=False, repr=False)
@@ -187,6 +189,7 @@ class Dimension(object):
         self.label = self.data.get('label')
         self.description = self.data.get('description')
         self.is_primary_key = self.data.get('primary_key') is True
+        self.is_hidden = self.data.get('hidden') is True
 
     def display_label(self):
         return self.label if self.label else self.name.replace('_', ' ').title()
@@ -196,7 +199,7 @@ class Dimension(object):
 class DimensionGroup(object):
 
     data = attr.ib(repr=False)
-    name = attr.ib(init=False, repr=False)
+    name = attr.ib(init=False, repr=True)
     type = attr.ib(init=False)
     label = attr.ib(init=False)
     description = attr.ib(init=False, repr=False)
@@ -208,6 +211,7 @@ class DimensionGroup(object):
         self.label = self.data.get('label')
         self.description = self.data.get('description')
         self.timeframes = self.data.get('timeframes')
+        self.is_hidden = self.data.get('hidden') is True
 
     def display_label(self):
         return self.label if self.label else self.name.replace('_', ' ').title()
@@ -217,7 +221,7 @@ class DimensionGroup(object):
 class Measure(object):
 
     data = attr.ib(repr=False)
-    name = attr.ib(init=False, repr=False)
+    name = attr.ib(init=False, repr=True)
     type = attr.ib(init=False)
     label = attr.ib(init=False)
     description = attr.ib(init=False, repr=False)
@@ -227,6 +231,7 @@ class Measure(object):
         self.type = self.data.get('type')
         self.label = self.data.get('label')
         self.description = self.data.get('description')
+        self.is_hidden = self.data.get('hidden') is True
 
     def display_label(self):
         return self.label if self.label else self.name.replace('_', ' ').title()
