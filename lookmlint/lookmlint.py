@@ -12,7 +12,7 @@ class ExploreView(object):
 
     data = attr.ib(repr=False)
     explore = attr.ib(init=False, repr=False)
-    name = attr.ib(init=False, repr=False)
+    name = attr.ib(init=False, repr=True)
     source_view = attr.ib(init=False, repr=False)
 
     def __attrs_post_init__(self):
@@ -148,6 +148,10 @@ class View(object):
         ]
         self.fields = self.dimensions + self.dimension_groups + self.measures
         self.extends = [v.strip('*') for v in self.data.get('extends', [])]
+        self.sql_table_name = self.data.get('sql_table_name')
+        self.derived_table_sql = None
+        if 'derived_table' in self.data:
+            self.derived_table_sql = self.data['derived_table']['sql']
 
     def field_label_issues(self, acronyms=[], abbreviations=[]):
         results = {}
@@ -160,6 +164,9 @@ class View(object):
 
     def has_primary_key(self):
         return any(d.is_primary_key for d in self.dimensions)
+
+    def has_sql_definition(self):
+        return self.sql_table_name is not None or self.derived_table_sql is not None
 
 
 @attr.s
@@ -405,6 +412,10 @@ def lint_unused_view_files(lkml):
     # check for unused view files
     unused_view_files = lkml.unused_view_files()
     return unused_view_files
+
+
+def lint_missing_view_sql_definitions(lkml):
+    return [v.name for v in lkml.views if not v.has_sql_definition()]
 
 
 def lint(lkml, acronyms=[], abbreviations=[]):
