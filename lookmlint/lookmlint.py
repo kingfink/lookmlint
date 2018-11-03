@@ -265,13 +265,21 @@ class LookML(object):
         return sorted(self.data['file']['view'].keys())
 
     def _view(self, view_file_name):
-        return self.data['file']['view'][view_file_name]['view'][view_file_name]
+        return list(self.data['file']['view'][view_file_name]['view'].values())[0]
 
     def _model_file_names(self):
         return sorted(self.data['file']['model'].keys())
 
     def _model(self, model_file_name):
         return self.data['file']['model'][model_file_name]['model'][model_file_name]
+
+    def mismatched_view_names(self):
+        results = {}
+        for vf in self._view_file_names():
+            v = View(self._view(vf))
+            if v.name != vf:
+                results[vf] = v.name
+        return results
 
     def all_explore_views(self):
         explore_views = []
@@ -429,6 +437,8 @@ def lint_missing_view_sql_definitions(lkml):
 def lint_semicolons_in_derived_table_sql(lkml):
     return [v.name for v in lkml.views if v.derived_table_contains_semicolon()]
 
+def lint_mismatched_view_names(lkml):
+    return lkml.mismatched_view_names()
 
 def lint(lkml, acronyms=[], abbreviations=[]):
     unused_view_files = lint_unused_view_files(lkml)
