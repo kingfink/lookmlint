@@ -168,6 +168,9 @@ class View(object):
     def has_sql_definition(self):
         return self.sql_table_name is not None or self.derived_table_sql is not None
 
+    def derived_table_contains_semicolon(self):
+        return self.derived_table_sql is not None and ';' in self.derived_table_sql
+
 
 @attr.s
 class Dimension(object):
@@ -416,6 +419,10 @@ def lint_unused_view_files(lkml):
 
 def lint_missing_view_sql_definitions(lkml):
     return [v.name for v in lkml.views if not v.has_sql_definition()]
+
+
+def lint_semicolons_in_derived_table_sql(lkml):
+    return [v.name for v in lkml.views if v.derived_table_contains_semicolon()]
 
 
 def lint(lkml, acronyms=[], abbreviations=[]):

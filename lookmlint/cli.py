@@ -15,6 +15,7 @@ CHECK_OPTIONS = [
     'primary-keys',
     'duplicate-labels',
     'missing-sql-definitions',
+    'semicolons-in-derived-table-sql',
 ]
 
 
@@ -84,6 +85,11 @@ def lint(repo_path, checks):
     if 'missing-sql-definitions' in checks:
         all_output += run_check(
             lookmlint.lint_missing_view_sql_definitions, 'Missing View SQL Definitions'
+        )
+    if 'semicolons-in-derived-table-sql' in checks:
+        all_output += run_check(
+            lookmlint.lint_semicolons_in_derived_table_sql,
+            'Derived SQL contains semicolon',
         )
 
     if all_output != '':
