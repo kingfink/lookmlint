@@ -14,6 +14,7 @@ CHECK_OPTIONS = [
     'view-files',
     'primary-keys',
     'duplicate-labels',
+    'missing-sql-definitions',
 ]
 
 
@@ -78,7 +79,11 @@ def lint(repo_path, checks):
         )
     if 'duplicate-labels' in checks:
         all_output += run_check(
-            lookmlint.lint_duplicate_labels, 'Duplicate View Labels'
+            lookmlint.lint_duplicate_view_labels, 'Duplicate View Labels'
+        )
+    if 'missing-sql-definitions' in checks:
+        all_output += run_check(
+            lookmlint.lint_missing_view_sql_definitions, 'Missing View SQL Definitions'
         )
 
     if all_output != '':
