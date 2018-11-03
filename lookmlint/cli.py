@@ -16,6 +16,7 @@ CHECK_OPTIONS = [
     'duplicate-labels',
     'missing-sql-definitions',
     'semicolons-in-derived-table-sql',
+    'mismatched-view-names',
 ]
 
 
@@ -90,6 +91,10 @@ def lint(repo_path, checks):
         all_output += run_check(
             lookmlint.lint_semicolons_in_derived_table_sql,
             'Derived SQL contains semicolon',
+        )
+    if 'mismatched-view-names' in checks:
+        all_output += run_check(
+            lookmlint.lint_mismatched_view_names, 'Mismatched View Names'
         )
 
     if all_output != '':
