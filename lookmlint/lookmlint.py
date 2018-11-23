@@ -300,7 +300,7 @@ class LookML(object):
 
 
 def read_lint_config(repo_path):
-    # read .lintconfig
+    # read .lintconfig.yml
     full_path = os.path.expanduser(repo_path)
     config_filepath = os.path.join(full_path, '.lintconfig.yml')
     acronyms = []
@@ -449,28 +449,3 @@ def lint_semicolons_in_derived_table_sql(lkml):
 
 def lint_mismatched_view_names(lkml):
     return lkml.mismatched_view_names()
-
-
-def lint(lkml, acronyms=[], abbreviations=[]):
-    unused_view_files = lint_unused_view_files(lkml)
-    unused_includes = lint_unused_includes(lkml)
-    views_missing_primary_keys = lint_view_primary_keys(lkml)
-    raw_sql_refs = lint_sql_references(lkml)
-    label_issues = lint_labels(lkml, acronyms, abbreviations)
-    duplicate_view_labels = lint_duplicate_view_labels(lkml)
-
-    # assemble overall issues dict
-    issues = {}
-    if unused_view_files != []:
-        issues['unused_view_files'] = unused_view_files
-    if unused_includes != {}:
-        issues['unused_includes'] = unused_includes
-    if views_missing_primary_keys != []:
-        issues['views_missing_primary_keys'] = views_missing_primary_keys
-    if raw_sql_refs != {}:
-        issues['raw_sql_refs'] = raw_sql_refs
-    if label_issues != {}:
-        issues['label_issues'] = label_issues
-    if duplicate_view_labels != {}:
-        issues['duplicate_view_labels'] = duplicate_view_labels
-    return issues
