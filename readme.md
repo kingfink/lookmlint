@@ -63,7 +63,7 @@ acronyms:
 
 ## checks
 
-### label issues
+### `label-issues`
 
 #### acronyms
 
@@ -91,7 +91,7 @@ dimension: unit_cost_usd {
 If you'd prefer some words fully spelled out (e.g. 'Quantity' instead of 'Qty'), define a list of abbreviations for `lookmlint` to catch.
 
 
-### raw sql in joins
+### `raw-sql-in-joins`
 
 Joins should refer to LookML dimensions as opposed to the underlying fields where possible.
 
@@ -113,33 +113,33 @@ join: order_items {
 }
 ```
 
-### unused includes
+### `unused-includes`
 
 If your LookML model explicitly specifies views to include, `lookmlint` can catch views that are `include`d in your model but not referenced in any of the explorations in that model.
 
-### unused view files
+### `unused-view-files`
 
 Find all view files that aren't referenced in any explorations in your project.
 
-### views missing primary keys
+### `views-missing-primary-keys`
 
 Find all view files that don't contain a `primary_key` dimension.
 
-### duplicate view labels
+### `duplicate-view-labels`
 
 Find any cases when two `join`s in an exploration end up with the same label.
 
 One way this can unwittingly creep into code is if a `label` is defined in a view file, that view is joined twice to the same exploration, but `view_label`s are not assigned to those joins.
 
-### missing-view-sql-definitions
+### `missing-view-sql-definitions`
 
 Find any views that do not have a `sql_table_name` or `derived_table` value set.
 
-### semicolons in derived table sql
+### `semicolons-in-derived-table-sql`
 
 Find any derived table SQL expressions that contain a rogue semicolon, which will throw errors at query time.
 
-### mismatched view names
+### `mismatched-view-names`
 
 Find any views where the view name does not match the view filename.
 
@@ -206,3 +206,9 @@ views-missing-primary-keys
 --------------------------
 - order_items
 ```
+
+## issues?
+
+This repo is still in alpha, so use at your own risk!
+
+Please open an issue for any feature suggestions or bugs, or feel free to open a PR with a fix / feature!
