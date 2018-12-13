@@ -214,6 +214,8 @@ We use CircleCI at Warby Parker to run our checks.
 
 Adding the following contents to `.circleci/config.yml` in your LookML project should work for running linting as part of your CI/CD workflow. This all runs in a few seconds, but leveraging caching could also help to speed things up.
 
+Customize the list of checks you run to suit your team's needs, or leave out the `--checks` flag to run all possible lint checks.
+
 ```
 version: 2
 jobs:
