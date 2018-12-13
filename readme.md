@@ -208,6 +208,40 @@ views-missing-primary-keys
 - order_items
 ```
 
+## adding to CircleCI
+
+We use CircleCI at Warby Parker to run our checks.
+
+Adding the following contents to `.circleci/config.yml` in your LookML project should work for running linting as part of your CI/CD workflow. This all runs in a few seconds, but leveraging caching could also help to speed things up.
+
+Customize the list of checks you run to suit your team's needs, or leave out the `--checks` flag to run all possible lint checks.
+
+```
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/python:3.6.1
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - run:
+          name: Install lookml-parser
+          command: |
+            curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
+            sudo apt install nodejs
+            sudo npm install -g lookml-parser
+      - run:
+          name: Install lookmlint
+          command: |
+            sudo pip install lookmlint
+      - run:
+          name: Lint lookml
+          command: |
+            lookmlint lint . --checks label-issues,unused-includes,unused-view-files,mismatched-view-names,semicolons-in-derived-table-sql,missing-view-sql-definitions
+```
+
+
 ## issues?
 
 This repo is still in alpha, so use at your own risk!
