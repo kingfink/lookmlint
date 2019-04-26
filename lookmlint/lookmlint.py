@@ -54,6 +54,8 @@ class ExploreView(object):
             and not w.endswith('(')
             # contains one period
             and w.count('.') == 1
+            # doesn't contain noqa
+            and not '--noqa' in w
         ]
         return len(raw_sql_words) > 0
 
