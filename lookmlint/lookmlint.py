@@ -55,7 +55,7 @@ class ExploreView(object):
             # contains one period
             and w.count('.') == 1
             # doesn't contain noqa
-            and not '--noqa' in line
+            and not '#noqa' in line
         ]
         return len(raw_sql_words) > 0
 
