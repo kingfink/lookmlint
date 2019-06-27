@@ -111,7 +111,7 @@ class Model(object):
         if isinstance(includes, str):
             includes = [includes]
         self.included_views = [i[: -len('.view')] for i in includes]
-        self.explores = [Explore(e) for e in self.data['explore'].values()]
+        self.explores = [Explore(e) for e in self.data['explore'].values() if isinstance(e, dict)]
         self.name = self.data['_model']
 
     def explore_views(self):
