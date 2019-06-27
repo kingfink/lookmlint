@@ -70,11 +70,13 @@ class Explore(object):
     views = attr.ib(init=False, repr=False)
 
     def __attrs_post_init__(self):
-        self.name = self.data.get('_explore')
-        self.label = self.data.get('label')
-        self.model = self.data['_model']
-        joined_views = [ExploreView(j) for j in self.data.get('joins', [])]
-        self.views = [ExploreView(self.data)] + joined_views
+        temp = list(self.data.values())[0]
+
+        self.name = temp.get('_explore')
+        self.label = temp.get('label')
+        self.model = temp.get['_model']
+        joined_views = [ExploreView(j) for j in temp.get('joins', [])]
+        self.views = [ExploreView(temp)] + joined_views
 
     def display_label(self):
         return self.label if self.label else self.name.replace('_', ' ').title()
@@ -106,14 +108,6 @@ class Model(object):
         if isinstance(includes, str):
             includes = [includes]
         self.included_views = [i[: -len('.view')] for i in includes]
-
-        self.explores = []
-        for e in self.data['explore']:
-            try:
-                Explore(e)
-            except:
-                print(self.data['explore'])
-
         self.explores = [Explore(e) for e in self.data['explore']]
         self.name = self.data['_model']
 
