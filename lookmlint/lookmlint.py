@@ -70,6 +70,8 @@ class Explore(object):
     views = attr.ib(init=False, repr=False)
 
     def __attrs_post_init__(self):
+        print(self.data)
+
         self.name = self.data.get('_explore')
         self.label = self.data.get('label')
         self.model = self.data['_model']
