@@ -167,8 +167,6 @@ class View(object):
         return results
 
     def has_primary_key(self):
-        if not any(d.is_primary_key for d in self.dimensions):
-            import pdb; pdb.set_trace()
         return any(d.is_primary_key for d in self.dimensions)
 
     def has_sql_definition(self):
