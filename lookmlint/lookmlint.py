@@ -167,8 +167,6 @@ class View(object):
         return results
 
     def has_primary_key(self):
-        print(self.dimensions)
-        print('--')
         return any(d.is_primary_key for d in self.dimensions)
 
     def has_sql_definition(self):
@@ -195,10 +193,6 @@ class Dimension(object):
         self.sql = self.data.get('sql')
         self.is_primary_key = self.data.get('primary_key') is True
         self.is_hidden = self.data.get('hidden') is True
-
-        print('in dimension:')
-        print(self.data)
-        print('--')
 
     def display_label(self):
         return self.label if self.label else self.name.replace('_', ' ').title()
