@@ -107,9 +107,7 @@ class Model(object):
             includes = [includes]
         self.included_views = [i[: -len('.view')] for i in includes]
 
-        print(self.data)
-
-        self.explores = [Explore(e) for e in self.data['explores']]
+        self.explores = [Explore(e) for e in self.data['explore']]
         self.name = self.data['_model']
 
     def explore_views(self):
