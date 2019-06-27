@@ -70,12 +70,7 @@ class Explore(object):
     views = attr.ib(init=False, repr=False)
 
     def __attrs_post_init__(self):
-        try:
-            self.name = self.data.get('_explore')
-        except:
-            print(self.data)
-            self.name = self.data.get('_explore')
-
+        self.name = self.data.get('_explore')
         self.label = self.data.get('label')
         self.model = self.data.get('_model')
         joined_views = [ExploreView(j) for j in self.data.get('joins', [])]
@@ -172,6 +167,8 @@ class View(object):
         return results
 
     def has_primary_key(self):
+        print(self.dimensions)
+        print('--')
         return any(d.is_primary_key for d in self.dimensions)
 
     def has_sql_definition(self):
