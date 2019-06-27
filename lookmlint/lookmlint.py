@@ -143,18 +143,10 @@ class View(object):
     def __attrs_post_init__(self):
         self.name = self.data['_view']
         self.label = self.data.get('label')
-
-        print(self.data)
-        print('--')
-
-        self.dimensions = [Dimension(d) for d in self.data.get('dimensions', [])]
-
-        print(self.dimensions)
-        print('--')
-
-        self.measures = [Measure(m) for m in self.data.get('measures', [])]
+        self.dimensions = [Dimension(d) for d in self.data.get('dimension').values()]
+        self.measures = [Measure(m) for m in self.data.get('measure').values()]
         self.dimension_groups = [
-            DimensionGroup(dg) for dg in self.data.get('dimension_groups', [])
+            DimensionGroup(dg) for dg in self.data.get('dimension_group').values()
         ]
         self.fields = self.dimensions + self.dimension_groups + self.measures
         self.extends = [v.strip('*') for v in self.data.get('extends', [])]
