@@ -70,8 +70,6 @@ class Explore(object):
     views = attr.ib(init=False, repr=False)
 
     def __attrs_post_init__(self):
-        print(self.data)
-
         self.name = self.data.get('_explore')
         self.label = self.data.get('label')
         self.model = self.data['_model']
@@ -108,6 +106,13 @@ class Model(object):
         if isinstance(includes, str):
             includes = [includes]
         self.included_views = [i[: -len('.view')] for i in includes]
+
+        self.explores = []
+        for e in self.data['explore']:
+            try:
+                Explore(e)
+            except:
+                print(self.data['explore'])
 
         self.explores = [Explore(e) for e in self.data['explore']]
         self.name = self.data['_model']
