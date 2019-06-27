@@ -186,6 +186,9 @@ class Dimension(object):
     description = attr.ib(init=False, repr=False)
 
     def __attrs_post_init__(self):
+        print(self.data)
+        print('--')
+
         self.name = self.data['_dimension']
         self.type = self.data.get('type', 'string')
         self.label = self.data.get('label')
