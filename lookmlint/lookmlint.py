@@ -72,7 +72,10 @@ class Explore(object):
     def __attrs_post_init__(self):
         self.name = self.data.get('_explore')
         self.label = self.data.get('label')
-        self.model = self.data.get['_model']
+        try:
+            self.model = self.data.get['_model']
+        except:
+            print(self.data)
         joined_views = [ExploreView(j) for j in self.data.get('joins', [])]
         self.views = [ExploreView(self.data)] + joined_views
 
