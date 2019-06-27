@@ -76,6 +76,7 @@ class Explore(object):
             self.model = self.data.get['_model']
         except:
             print(self.data)
+            self.model = self.data.get['_model']
         joined_views = [ExploreView(j) for j in self.data.get('joins', [])]
         self.views = [ExploreView(self.data)] + joined_views
 
