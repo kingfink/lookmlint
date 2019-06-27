@@ -70,7 +70,12 @@ class Explore(object):
     views = attr.ib(init=False, repr=False)
 
     def __attrs_post_init__(self):
-        self.name = self.data.get('_explore')
+        try:
+            self.name = self.data.get('_explore')
+        except:
+            print(self.data)
+            self.name = self.data.get('_explore')
+
         self.label = self.data.get('label')
         self.model = self.data.get('_model')
         joined_views = [ExploreView(j) for j in self.data.get('joins', [])]
