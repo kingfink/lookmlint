@@ -143,7 +143,15 @@ class View(object):
     def __attrs_post_init__(self):
         self.name = self.data['_view']
         self.label = self.data.get('label')
+
+        print(self.data)
+        print('--')
+
         self.dimensions = [Dimension(d) for d in self.data.get('dimensions', [])]
+
+        print(self.dimensions)
+        print('--')
+
         self.measures = [Measure(m) for m in self.data.get('measures', [])]
         self.dimension_groups = [
             DimensionGroup(dg) for dg in self.data.get('dimension_groups', [])
@@ -167,9 +175,6 @@ class View(object):
         return results
 
     def has_primary_key(self):
-        if not any(d.is_primary_key for d in self.dimensions):
-            print(self.dimensions)
-            print('--')
         return any(d.is_primary_key for d in self.dimensions)
 
     def has_sql_definition(self):
