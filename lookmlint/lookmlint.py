@@ -237,13 +237,13 @@ class Measure(object):
         self.description = self.data.get('description')
         self.sql = self.data.get('sql')
         self.is_hidden = self.data.get('hidden') is True
-        self.drill_fields = self.data.get('drill_fields')
+        self.drill_fields = self.data.get('drill_fields', [])
 
     def display_label(self):
         return self.label if self.label else self.name.replace('_', ' ').title()
 
     def has_drill_fields(self):
-        return self.drill_fields is not None or self.type in ["number", "percent_of_previous", "percent_of_total"]
+        return len(self.drill_fields) > 0 or self.type in ["number", "percent_of_previous", "percent_of_total"]
 
 
 @attr.s
