@@ -243,7 +243,7 @@ class Measure(object):
         return self.label if self.label else self.name.replace('_', ' ').title()
 
     def has_drill_fields(self):
-        return self.drill_fields is not None
+        return self.drill_fields is not None or self.type in ["number", "percent_of_previous", "percent_of_total"]
 
 
 @attr.s
