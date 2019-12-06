@@ -237,9 +237,13 @@ class Measure(object):
         self.description = self.data.get('description')
         self.sql = self.data.get('sql')
         self.is_hidden = self.data.get('hidden') is True
+        self.drill_fields = self.data.get('drill_fields')
 
     def display_label(self):
         return self.label if self.label else self.name.replace('_', ' ').title()
+
+    def has_drill_fields(self):
+        return self.drill_fields is not None
 
 
 @attr.s
@@ -419,6 +423,15 @@ def lint_view_primary_keys(lkml):
     # check for missing primary keys
     views_missing_primary_keys = [v.name for v in lkml.views if not v.has_primary_key()]
     return views_missing_primary_keys
+
+
+def lint_missing_drill_fields(lkml):
+    # check for measures missing drill fields
+    measures_missing_drill_fields = []
+    for v in lkml.views:
+        measures_missing_drill_fields += [(v.name, m.name) for m in v.measures if not m.has_drill_fields()]
+
+    return sorted(list(set(measures_missing_drill_fields)))
 
 
 def lint_unused_includes(lkml):

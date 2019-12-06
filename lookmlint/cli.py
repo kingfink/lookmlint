@@ -18,6 +18,7 @@ CHECK_OPTIONS = [
     'missing-view-sql-definitions',
     'semicolons-in-derived-table-sql',
     'mismatched-view-names',
+    'missing-drill-fields',
 ]
 
 
@@ -54,6 +55,8 @@ def _run_check(check_name, lkml, lint_config):
         return lookmlint.lint_semicolons_in_derived_table_sql(lkml)
     if check_name == 'mismatched-view-names':
         return lookmlint.lint_mismatched_view_names(lkml)
+    if check_name == 'missing-drill-fields':
+        return lookmlint.lint_missing_drill_fields(lkml)
     raise Exception(f'Check: {check_name} not recognized')
 
 
@@ -114,6 +117,9 @@ def _format_output(check_name, results):
     if check_name == 'mismatched-view-names':
         for view_file, view_name in results.items():
             lines.append(f'- {view_file}.view.lkml: {view_name}')
+    if check_name == 'missing-drill-fields':
+        for view_name, measure_name in results:
+            lines.append(f'- {view_name}.{measure_name}')
     return lines
 
 
