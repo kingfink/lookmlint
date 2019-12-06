@@ -243,7 +243,7 @@ class Measure(object):
         return self.label if self.label else self.name.replace('_', ' ').title()
 
     def has_drill_fields(self):
-        return len(self.drill_fields) > 0 or self.type in ["number", "percent_of_previous", "percent_of_total"]
+        return len(self.drill_fields) > 0 or self.type in ["number", "percent_of_previous", "percent_of_total"] or self.is_hidden
 
 
 @attr.s
