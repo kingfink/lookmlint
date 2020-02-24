@@ -175,7 +175,7 @@ class View(object):
     def derived_table_contains_semicolon(self):
         return self.derived_table_sql is not None and ';' in self.derived_table_sql
 
-    def dervied_table_contains_select_star(self):
+    def derived_table_contains_select_star(self):
         return self.derived_table_sql is not None and '*' in self.derived_table_sql
 
 
