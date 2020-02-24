@@ -175,6 +175,9 @@ class View(object):
     def derived_table_contains_semicolon(self):
         return self.derived_table_sql is not None and ';' in self.derived_table_sql
 
+    def dervied_table_contains_select_star(self):
+        return self.derived_table_sql is not None and '*' in self.derived_table_sql
+
 
 @attr.s
 class Dimension(object):
@@ -460,6 +463,10 @@ def lint_missing_view_sql_definitions(lkml):
 
 def lint_semicolons_in_derived_table_sql(lkml):
     return [v.name for v in lkml.views if v.derived_table_contains_semicolon()]
+
+
+def lint_select_star_in_derived_table_sql(lkml):
+    return [v.name for v in lkml.views if v.derived_table_contains_select_star()]
 
 
 def lint_mismatched_view_names(lkml):

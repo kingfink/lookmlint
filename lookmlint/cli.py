@@ -19,6 +19,7 @@ CHECK_OPTIONS = [
     'semicolons-in-derived-table-sql',
     'mismatched-view-names',
     'missing-drill-fields',
+    'select-star-in-derived-table-sql',
 ]
 
 
@@ -57,6 +58,8 @@ def _run_check(check_name, lkml, lint_config):
         return lookmlint.lint_mismatched_view_names(lkml)
     if check_name == 'missing-drill-fields':
         return lookmlint.lint_missing_drill_fields(lkml)
+    if check_name == 'select-star-in-derived-table-sql':
+        return lookmlint.lint_select_star_in_derived_table_sql(lkml)
     raise Exception(f'Check: {check_name} not recognized')
 
 
