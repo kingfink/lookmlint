@@ -114,7 +114,7 @@ def _format_output(check_name, results):
     if check_name == 'missing-view-sql-definitions':
         for view in results:
             lines.append(f'- {view}')
-    if check_name == 'semicolons-in-derived-table-sql':
+    if check_name in ['semicolons-in-derived-table-sql', 'select-star-in-derived-table-sql']:
         for view in results:
             lines.append(f'- {view}')
     if check_name == 'mismatched-view-names':

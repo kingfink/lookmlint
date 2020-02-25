@@ -1,6 +1,7 @@
 from collections import Counter
 import json
 import os
+import re
 import subprocess
 
 import attr
@@ -176,7 +177,7 @@ class View(object):
         return self.derived_table_sql is not None and ';' in self.derived_table_sql
 
     def derived_table_contains_select_star(self):
-        return self.derived_table_sql is not None and '*' in self.derived_table_sql
+        return self.derived_table_sql is not None and len(re.findall('(?:[^/])(\*)(?:[^/])', self.derived_table_sql)) > 0 and '#noqa:select-star' not in self.derived_table_sql
 
 
 @attr.s
